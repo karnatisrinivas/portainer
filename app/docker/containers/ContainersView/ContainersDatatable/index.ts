@@ -1,4 +1,4 @@
 export {
-  ContainersDatatableContainer,
+  ContainersDatatable,
   ContainersDatatableAngular,
-} from './ContainersDatatableContainer';
+} from './ContainersDatatable';

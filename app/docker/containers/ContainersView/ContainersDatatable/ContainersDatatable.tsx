@@ -1,232 +1,97 @@
 import {
-  useTable,
-  useSortBy,
-  useFilters,
-  useGlobalFilter,
-  usePagination,
-  Row,
-} from 'react-table';
-import { useRowSelectColumn } from '@lineup-lite/hooks';
-import { useMemo } from 'react';
-
-import { PaginationControls } from '@/portainer/components/pagination-controls';
-import {
-  QuickActionsSettings,
-  buildAction,
-} from '@/portainer/components/datatables/components/QuickActionsSettings';
-import { Table } from '@/portainer/components/datatables/components';
-import { multiple } from '@/portainer/components/datatables/components/filter-types';
-import { useTableSettings } from '@/portainer/components/datatables/components/useTableSettings';
-import { ColumnVisibilityMenu } from '@/portainer/components/datatables/components/ColumnVisibilityMenu';
-import {
-  SearchBar,
-  useSearchBarState,
-} from '@/portainer/components/datatables/components/SearchBar';
-import type {
-  ContainersTableSettings,
-  DockerContainer,
-} from '@/docker/containers/types';
-import { useRowSelect } from '@/portainer/components/datatables/components/useRowSelect';
-import { Checkbox } from '@/portainer/components/form-components/Checkbox';
-import { SelectedRowsCount } from '@/portainer/components/datatables/components/SelectedRowsCount';
+  TableSettingsProvider,
+  useTableSettings,
+} from '@/portainer/components/datatables/components/useTableSettings';
 import { Environment } from '@/portainer/environments/types';
+import { r2a } from '@/react-tools/react2angular';
 
-import { ContainersDatatableActions } from './ContainersDatatableActions';
-import { ContainersDatatableSettings } from './ContainersDatatableSettings';
-import { useColumns } from './columns';
-import { RowProvider } from './RowContext';
+import { Filters } from '../../containers.service';
+import { ContainersTableSettings, DockerContainer } from '../../types';
+import { useContainers } from '../../queries';
 
-export interface Props {
-  isAddActionVisible: boolean;
-  containers: DockerContainer[];
-  isHostColumnVisible: boolean;
-  isRefreshVisible: boolean;
-  tableKey: string;
-  environment: Environment;
+import {
+  ContainersDatatableTable,
+  Props as ContainerDatatableProps,
+} from './ContainersDatatableTable';
+
+interface Props
+  extends Omit<ContainerDatatableProps, 'containers' | 'tableKey'> {
+  filters?: Filters;
+  tableKey?: string;
 }
-
-const actions = [
-  buildAction('logs', 'Logs'),
-  buildAction('inspect', 'Inspect'),
-  buildAction('stats', 'Stats'),
-  buildAction('exec', 'Console'),
-  buildAction('attach', 'Attach'),
-];
 
 export function ContainersDatatable({
-  isAddActionVisible,
-  containers,
-  isHostColumnVisible,
-  isRefreshVisible,
-  tableKey,
+  tableKey = 'containers',
   environment,
+  filters,
+  isRefreshVisible,
+  ...props
 }: Props) {
-  const { settings, setTableSettings } =
-    useTableSettings<ContainersTableSettings>();
-  const [searchBarValue, setSearchBarValue] = useSearchBarState(tableKey);
-
-  const columns = useColumns(isHostColumnVisible);
-
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    page,
-    prepareRow,
-    selectedFlatRows,
-    allColumns,
-    gotoPage,
-    setPageSize,
-    setHiddenColumns,
-    setGlobalFilter,
-    state: { pageIndex, pageSize },
-  } = useTable<DockerContainer>(
-    {
-      defaultCanFilter: false,
-      columns,
-      data: containers,
-      filterTypes: { multiple },
-      initialState: {
-        pageSize: settings.pageSize || 10,
-        hiddenColumns: settings.hiddenColumns,
-        sortBy: [settings.sortBy],
-        globalFilter: searchBarValue,
-      },
-      isRowSelectable(row: Row<DockerContainer>) {
-        return !row.original.IsPortainer;
-      },
-      getRowId(originalRow: DockerContainer) {
-        return originalRow.Id;
-      },
-      selectCheckboxComponent: Checkbox,
-      autoResetSelectedRows: false,
-      autoResetGlobalFilter: false,
-    },
-    useFilters,
-    useGlobalFilter,
-    useSortBy,
-    usePagination,
-    useRowSelect,
-    useRowSelectColumn
-  );
-
-  const columnsToHide = allColumns.filter((colInstance) => {
-    const columnDef = columns.find((c) => c.id === colInstance.id);
-    return columnDef?.canHide;
-  });
-
-  const rowContext = useMemo(() => ({ environment }), [environment]);
-
-  const tableProps = getTableProps();
-  const tbodyProps = getTableBodyProps();
+  const defaultSettings = {
+    autoRefreshRate: 0,
+    truncateContainerName: 32,
+    hiddenQuickActions: [],
+    hiddenColumns: [],
+    pageSize: 10,
+    sortBy: { id: 'state', desc: false },
+  };
 
   return (
-    <Table.Container>
-      <Table.Title icon="fa-cubes" label="Containers">
-        <Table.TitleActions>
-          <ColumnVisibilityMenu<DockerContainer>
-            columns={columnsToHide}
-            onChange={handleChangeColumnsVisibility}
-            value={settings.hiddenColumns}
-          />
-
-          <Table.SettingsMenu
-            quickActions={<QuickActionsSettings actions={actions} />}
-          >
-            <ContainersDatatableSettings isRefreshVisible={isRefreshVisible} />
-          </Table.SettingsMenu>
-        </Table.TitleActions>
-      </Table.Title>
-
-      <Table.Actions>
-        <ContainersDatatableActions
-          selectedItems={selectedFlatRows.map((row) => row.original)}
-          isAddActionVisible={isAddActionVisible}
-          endpointId={environment.Id}
-        />
-      </Table.Actions>
-
-      <SearchBar value={searchBarValue} onChange={handleSearchBarChange} />
-
-      <Table
-        className={tableProps.className}
-        role={tableProps.role}
-        style={tableProps.style}
+    <TableSettingsProvider defaults={defaultSettings} storageKey={tableKey}>
+      <ContainersLoader
+        environment={environment}
+        filters={filters}
+        isRefreshVisible={isRefreshVisible}
       >
-        <thead>
-          {headerGroups.map((headerGroup) => {
-            const { key, className, role, style } =
-              headerGroup.getHeaderGroupProps();
-
-            return (
-              <Table.HeaderRow<DockerContainer>
-                key={key}
-                className={className}
-                role={role}
-                style={style}
-                headers={headerGroup.headers}
-                onSortChange={handleSortChange}
-              />
-            );
-          })}
-        </thead>
-        <tbody
-          className={tbodyProps.className}
-          role={tbodyProps.role}
-          style={tbodyProps.style}
-        >
-          <Table.Content
-            emptyContent="No container available."
-            rows={page}
-            prepareRow={prepareRow}
-            renderRow={(row, { key, className, role, style }) => (
-              <RowProvider context={rowContext} key={key}>
-                <Table.Row<DockerContainer>
-                  cells={row.cells}
-                  className={className}
-                  role={role}
-                  style={style}
-                  key={key}
-                />
-              </RowProvider>
-            )}
+        {(containers) => (
+          <ContainersDatatableTable
+            // eslint-disable-next-line react/jsx-props-no-spreading
+            {...props}
+            containers={containers}
+            isRefreshVisible={isRefreshVisible}
+            environment={environment}
+            tableKey={tableKey}
           />
-        </tbody>
-      </Table>
+        )}
+      </ContainersLoader>
+    </TableSettingsProvider>
+  );
+}
 
-      <Table.Footer>
-        <SelectedRowsCount value={selectedFlatRows.length} />
-        <PaginationControls
-          showAll
-          pageLimit={pageSize}
-          page={pageIndex + 1}
-          onPageChange={(p) => gotoPage(p - 1)}
-          totalCount={containers.length}
-          onPageLimitChange={handlePageSizeChange}
-        />
-      </Table.Footer>
-    </Table.Container>
+interface ContainersLoaderProps {
+  environment: Environment;
+  filters?: Filters;
+  isRefreshVisible: boolean;
+  children: (containers: DockerContainer[]) => React.ReactNode;
+}
+
+function ContainersLoader({
+  environment,
+  filters,
+  isRefreshVisible,
+  children,
+}: ContainersLoaderProps) {
+  const { settings } = useTableSettings<ContainersTableSettings>();
+
+  const containersQuery = useContainers(
+    environment.Id,
+    true,
+    filters,
+    isRefreshVisible ? settings.autoRefreshRate * 1000 : undefined
   );
 
-  function handlePageSizeChange(pageSize: number) {
-    setPageSize(pageSize);
-    setTableSettings((settings) => ({ ...settings, pageSize }));
+  if (!containersQuery.data) {
+    return null;
   }
 
-  function handleChangeColumnsVisibility(hiddenColumns: string[]) {
-    setHiddenColumns(hiddenColumns);
-    setTableSettings((settings) => ({ ...settings, hiddenColumns }));
-  }
-
-  function handleSearchBarChange(value: string) {
-    setSearchBarValue(value);
-    setGlobalFilter(value);
-  }
-
-  function handleSortChange(id: string, desc: boolean) {
-    setTableSettings((settings) => ({
-      ...settings,
-      sortBy: { id, desc },
-    }));
-  }
+  return <>{children(containersQuery.data)}</>;
 }
+
+export const ContainersDatatableAngular = r2a(ContainersDatatable, [
+  'isAddActionVisible',
+  'isHostColumnVisible',
+  'isRefreshVisible',
+  'tableKey',
+  'environment',
+  'filters',
+]);

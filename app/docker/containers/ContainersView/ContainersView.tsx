@@ -4,7 +4,7 @@ import { Environment } from '@/portainer/environments/types';
 import { isAgentEnvironment } from '@/portainer/environments/utils';
 import { r2a } from '@/react-tools/react2angular';
 
-import { ContainersDatatableContainer } from './ContainersDatatable';
+import { ContainersDatatable } from './ContainersDatatable';
 
 interface Props {
   endpoint: Environment;
@@ -27,7 +27,7 @@ export function ContainersView({ endpoint: environment }: Props) {
 
       <div className="row">
         <div className="col-sm-12">
-          <ContainersDatatableContainer
+          <ContainersDatatable
             environment={environment}
             isAddActionVisible
             isRefreshVisible
