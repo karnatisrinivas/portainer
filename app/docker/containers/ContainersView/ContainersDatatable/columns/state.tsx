@@ -1,16 +1,12 @@
 import { CellProps, Column } from 'react-table';
 import clsx from 'clsx';
-import _ from 'lodash-es';
 
 import { DefaultFilter } from '@/portainer/components/datatables/components/Filter';
-import type {
-  DockerContainer,
-  DockerContainerStatus,
-} from '@/docker/containers/types';
+import { DockerContainer, ContainerStatus } from '@/docker/containers/types';
 
 export const state: Column<DockerContainer> = {
   Header: 'State',
-  accessor: 'State',
+  accessor: 'Status',
   id: 'state',
   Cell: StatusCell,
   sortType: 'string',
@@ -20,12 +16,13 @@ export const state: Column<DockerContainer> = {
 };
 
 function StatusCell({
-  value: state,
-}: CellProps<DockerContainer, DockerContainerStatus>) {
-  const statusNormalized = _.toLower(state);
-  const hasHealthCheck = ['starting', 'healthy', 'unhealthy'].includes(
-    statusNormalized
-  );
+  value: status,
+}: CellProps<DockerContainer, ContainerStatus>) {
+  const hasHealthCheck = [
+    ContainerStatus.Starting,
+    ContainerStatus.Healthy,
+    ContainerStatus.Unhealthy,
+  ].includes(status);
 
   const statusClassName = getClassName();
 
@@ -36,27 +33,26 @@ function StatusCell({
       })}
       title={hasHealthCheck ? 'This container has a health check' : ''}
     >
-      {state}
+      {status}
     </span>
   );
 
   function getClassName() {
-    if (includeString(['paused', 'starting', 'unhealthy'])) {
-      return 'warning';
-    }
-
-    if (includeString(['created'])) {
-      return 'info';
-    }
-
-    if (includeString(['stopped', 'dead', 'exited'])) {
-      return 'danger';
-    }
-
-    return 'success';
-
-    function includeString(values: DockerContainerStatus[]) {
-      return values.some((val) => statusNormalized.includes(val));
+    switch (status) {
+      case ContainerStatus.Paused:
+      case ContainerStatus.Starting:
+      case ContainerStatus.Unhealthy:
+        return 'warning';
+      case ContainerStatus.Created:
+        return 'info';
+      case ContainerStatus.Stopped:
+      case ContainerStatus.Dead:
+      case ContainerStatus.Exited:
+        return 'danger';
+      case ContainerStatus.Healthy:
+      case ContainerStatus.Running:
+      default:
+        return 'success';
     }
   }
 }

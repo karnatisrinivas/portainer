@@ -5,7 +5,11 @@ import { useAuthorizations, Authorized } from '@/portainer/hooks/useUser';
 import { Link } from '@/portainer/components/Link';
 import { confirmContainerDeletion } from '@/portainer/services/modal.service/prompt';
 import { setPortainerAgentTargetHeader } from '@/portainer/services/http-request.helper';
-import type { ContainerId, DockerContainer } from '@/docker/containers/types';
+import {
+  ContainerId,
+  ContainerStatus,
+  DockerContainer,
+} from '@/docker/containers/types';
 import {
   killContainer,
   pauseContainer,
@@ -36,13 +40,18 @@ export function ContainersDatatableActions({
 }: Props) {
   const selectedItemCount = selectedItems.length;
   const hasPausedItemsSelected = selectedItems.some(
-    (item) => item.State === 'paused'
+    (item) => item.State === ContainerStatus.Paused
   );
   const hasStoppedItemsSelected = selectedItems.some((item) =>
-    ['stopped', 'created'].includes(item.State)
+    [ContainerStatus.Stopped, ContainerStatus.Created].includes(item.Status)
   );
   const hasRunningItemsSelected = selectedItems.some((item) =>
-    ['running', 'healthy', 'unhealthy', 'starting'].includes(item.State)
+    [
+      ContainerStatus.Running,
+      ContainerStatus.Healthy,
+      ContainerStatus.Unhealthy,
+      ContainerStatus.Starting,
+    ].includes(item.Status)
   );
 
   const isAuthorized = useAuthorizations([

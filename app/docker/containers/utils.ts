@@ -5,7 +5,7 @@ import { ResourceControlViewModel } from '@/portainer/access-control/models/Reso
 import {
   DockerContainer,
   DockerContainerResponse,
-  DockerContainerStatus,
+  ContainerStatus,
 } from './types';
 
 export function parseViewModel(
@@ -49,36 +49,40 @@ export function parseViewModel(
   };
 }
 
-function createStatus(statusText = ''): DockerContainerStatus {
+function createStatus(statusText = ''): ContainerStatus {
   const status = statusText.toLowerCase();
 
-  if (status.includes('paused')) {
-    return 'paused';
+  if (status.includes(ContainerStatus.Paused)) {
+    return ContainerStatus.Paused;
   }
 
-  if (status.includes('dead')) {
-    return 'dead';
+  if (status.includes(ContainerStatus.Dead)) {
+    return ContainerStatus.Dead;
   }
 
-  if (status.includes('created')) {
-    return 'created';
+  if (status.includes(ContainerStatus.Created)) {
+    return ContainerStatus.Created;
   }
 
-  if (status.includes('exited')) {
-    return 'stopped';
+  if (status.includes(ContainerStatus.Stopped)) {
+    return ContainerStatus.Stopped;
+  }
+
+  if (status.includes(ContainerStatus.Exited)) {
+    return ContainerStatus.Exited;
   }
 
   if (status.includes('(healthy)')) {
-    return 'healthy';
+    return ContainerStatus.Healthy;
   }
 
   if (status.includes('(unhealthy)')) {
-    return 'unhealthy';
+    return ContainerStatus.Unhealthy;
   }
 
   if (status.includes('(health: starting)')) {
-    return 'starting';
+    return ContainerStatus.Starting;
   }
 
-  return 'running';
+  return ContainerStatus.Running;
 }

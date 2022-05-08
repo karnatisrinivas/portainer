@@ -9,16 +9,17 @@ import {
 
 import { PortainerMetadata } from '../types';
 
-export type DockerContainerStatus =
-  | 'paused'
-  | 'stopped'
-  | 'created'
-  | 'healthy'
-  | 'unhealthy'
-  | 'starting'
-  | 'running'
-  | 'dead'
-  | 'exited';
+export enum ContainerStatus {
+  Paused = 'paused',
+  Stopped = 'stopped',
+  Created = 'created',
+  Healthy = 'healthy',
+  Unhealthy = 'unhealthy',
+  Starting = 'starting',
+  Running = 'running',
+  Dead = 'dead',
+  Exited = 'exited',
+}
 
 export type QuickAction = 'attach' | 'exec' | 'inspect' | 'logs' | 'stats';
 
@@ -42,7 +43,7 @@ export type ContainerId = string;
 export type DockerContainer = {
   IsPortainer: boolean;
   State: string;
-  Status: DockerContainerStatus;
+  Status: ContainerStatus;
   NodeName: string;
   Id: ContainerId;
   IP: string;
