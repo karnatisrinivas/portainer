@@ -16,3 +16,8 @@ export enum StackType {
    */
   Nomad,
 }
+
+export enum StackStatus {
+  Active = 1,
+  Inactive,
+}

@@ -1,7 +1,7 @@
 import { ResourceControlType } from '@/portainer/access-control/types';
 import { AccessControlFormData } from 'Portainer/components/accessControlForm/porAccessControlFormModel';
 import { FeatureId } from 'Portainer/feature-flags/enums';
-import { StackType } from '@/docker/stacks/types';
+import { StackStatus, StackType } from '@/docker/stacks/types';
 
 angular.module('portainer.app').controller('StackController', [
   '$async',
@@ -361,7 +361,7 @@ angular.module('portainer.app').controller('StackController', [
             $scope.stack.Status = data.resources && ((isSwarm && data.resources.services.length) || data.resources.containers.length) ? 1 : 2;
           }
 
-          if (isSwarm && $scope.stack.Status === 1) {
+          if (isSwarm && $scope.stack.Status === StackStatus.Active) {
             assignSwarmStackResources(data.resources, agentProxy);
           }
 
