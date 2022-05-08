@@ -1,6 +1,7 @@
 import { ResourceControlType } from '@/portainer/access-control/types';
 import { AccessControlFormData } from 'Portainer/components/accessControlForm/porAccessControlFormModel';
 import { FeatureId } from 'Portainer/feature-flags/enums';
+import { StackType } from '@/docker/stacks/types';
 
 angular.module('portainer.app').controller('StackController', [
   '$async',
@@ -55,6 +56,8 @@ angular.module('portainer.app').controller('StackController', [
     ContainerHelper,
     endpoint
   ) {
+    $scope.STACK_TYPES = StackType;
+
     $scope.resourceType = ResourceControlType.Stack;
 
     $scope.onUpdateResourceControlSuccess = function () {
@@ -415,13 +418,13 @@ angular.module('portainer.app').controller('StackController', [
     }
 
     function loadExternalStack(name) {
-      var stackType = $transition$.params().type;
-      if (!stackType || (stackType !== '1' && stackType !== '2')) {
+      const stackType = $scope.stackType;
+      if (!stackType || (stackType !== StackType.DockerSwarm && stackType !== StackType.DockerCompose)) {
         Notifications.error('Failure', null, 'Invalid type URL parameter.');
         return;
       }
 
-      if (stackType === '1') {
+      if (stackType === StackType.DockerSwarm) {
         loadExternalSwarmStack(name);
       }
     }
@@ -445,6 +448,8 @@ angular.module('portainer.app').controller('StackController', [
     };
 
     async function initView() {
+      $scope.stackType = parseInt($state.params.type, 10);
+
       var stackName = $transition$.params().name;
       $scope.stackName = stackName;
 
@@ -470,8 +475,6 @@ angular.module('portainer.app').controller('StackController', [
       }
 
       $scope.composeSyntaxMaxVersion = endpoint.ComposeSyntaxMaxVersion;
-
-      $scope.stackType = $transition$.params().type;
     }
 
     initView();
