@@ -11,7 +11,6 @@ import { Button } from '@/portainer/components/Button';
 import { PaginationControls } from '@/portainer/components/pagination-controls';
 import { useEnvironmentList } from '@/portainer/environments/queries';
 import { usePaginationLimitState } from '@/portainer/hooks/usePaginationLimitState';
-import 'bootstrap/dist/css/bootstrap.css';
 import '@reach/dialog/styles.css';
 import './KubeconfigButton.css';
 
